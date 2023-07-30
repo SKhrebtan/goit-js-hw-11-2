@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./sass/index.scss" />
     <link rel="stylesheet" href="../node_modules/spin.js/spin.css" />
     <script type="module" src="./index.js"></script>
+    <script type="module" src="./js/scrollButtons.js"></script>
   </head>
   <body>
     <form class="search-form" id="search-form">
@@ -18,12 +19,21 @@
         class="input"
       />
       <button type="submit" class="submit-btn">Search</button>
-
-      <div class="gallery">
-        <!-- Картки зображень -->
-      </div>
-
-      <span class="spin"></span>
     </form>
+
+    <div class="gallery">
+      <!-- Картки зображень -->
+    </div>
+    <button id="myBtn" title="Go to top" type="button">
+      <svg width="32" height="32" class="arrow">
+        <use href="./images/icons.svg#icon-arrow"></use>
+      </svg>
+    </button>
+    <button id="myBtn2" class="btntobottom" title="Go to bottom" type="button">
+      <svg width="32" height="32" class="arrow">
+        <use href="./images/icons.svg#icon-arrow-down"></use>
+      </svg>
+    </button>
+    <div class="backdrop"><span class="spin"></span></div>
   </body>
 </html>

@@ -6,7 +6,7 @@ export class PixabayApi {
         this.searchQuery = '';
         this.page = 1;
         this.per_page = 20;
-        this.totalHits = 0;      
+        this.total = 0;      
     }
   
     async fetchImages() {
@@ -22,8 +22,7 @@ export class PixabayApi {
         }
         
         const { data } = await axios.get(url, { params })
-        console.log(data);
-        return data;
+         return data;
     };
     
     incrementPage() {
@@ -39,5 +38,17 @@ export class PixabayApi {
 
     setQuery(newQuery) {
         this.searchQuery = newQuery;
+    }
+
+    setTotal(total) {
+        this.total += total;
+    }
+    
+    getTotal() {
+        return this.total;
+    }
+
+    resetTotal() {
+        this.total = 0;
     }
     }

@@ -1,5 +1,4 @@
 function onSearchRender(data) {
-  console.log(data)
   return data.map(({ webformatURL, largeImageURL, tags, likes, views, downloads, comments }) => {
     return `<a href=${largeImageURL} class="link"><div class="photo-card">
   <img src="${webformatURL}" alt=${tags} loading="lazy" width=320/>

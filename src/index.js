@@ -5,7 +5,6 @@ import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 import Notiflix from 'notiflix';
 import { Spinner } from 'spin.js';
-// refs.spin.hidden = true;
 
 const pixabay = new PixabayApi();
 const lightbox = new SimpleLightbox('.gallery a', {
@@ -18,62 +17,111 @@ const options = {
   rootMargin: '100px',
   threshold: 1.0,
 };
-
 const opts = {
-  lines: 20, // The number of lines to draw
-  length: 20, // The length of each line
-  width: 6, // The line thickness
-  radius: 6, // The radius of the inner circle
-  scale: 1, // Scales overall size of the spinner
-  corners: 1, // Corner roundness (0..1)
-  speed: 0.75, // Rounds per second
-  rotate: 0, // The rotation offset
-  animation: 'spinner-line-fade-quick', // The CSS animation name for the lines
-  direction: 1, // 1: clockwise, -1: counterclockwise
-  color: '#fc8a11', // CSS color or array of colors
-  fadeColor: 'transparent', // CSS color or array of colors
-  
-  shadow: '0 0 1px transparent', // Box-shadow for the lines
-  zIndex: 2000000000, // The z-index (defaults to 2e9)
-  className: 'spinner', // The CSS class to assign to the spinner
- };
+  lines: 20, 
+  length: 30, 
+  width: 6, 
+  radius: 6, 
+  scale: 1, 
+  corners: 1, 
+  speed: 1.5, 
+  rotate: 0, 
+  animation: 'spinner-line-fade-quick', 
+  direction: 1,
+  color: 'black',
+  fadeColor: 'transparent',
+  shadow: '0 0 1px transparent', 
+  zIndex: 2000000000,
+  className: 'spinner',
+};
 new Spinner(opts).spin(refs.spin);
+ window.onload = function() {
+  refs.backdrop.classList.add('is-hidden');
+}
 
 refs.form.addEventListener('submit', onFormSubmit);
 
 async function onLoadMoreImages(entries, observer) {
-    entries.forEach(async entry => {
-        if (entry.isIntersecting) {
-            observer.unobserve(entry.target);
-            pixabay.incrementPage();
-            const { hits } = await pixabay.fetchImages();
-            const markup = onSearchRender(hits);
-            refs.gallery.insertAdjacentHTML('beforeend', markup);
-            const lastItem = document.querySelector('.gallery .link:last-child');
-            observer.observe(lastItem);
-            lightbox.refresh();
+  entries.forEach(async entry => {
+    if (entry.isIntersecting) {
+      observer.unobserve(entry.target);
+      pixabay.incrementPage();
+             
+      try {
+        refs.backdrop.classList.remove('is-hidden');
+        const { hits, totalHits } = await pixabay.fetchImages();
+        if (totalHits === 0) {
+          Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+          return;
         }
+        pixabay.setTotal(hits.length);
+        const markup = await onSearchRender(hits);
+        refs.backdrop.classList.add('is-hidden');
+        refs.gallery.insertAdjacentHTML('beforeend', markup);
+        lightbox.refresh();
+        const lastItem = document.querySelector(
+          '.gallery .link:last-child');
+        observer.observe(lastItem);
+        
+        if (pixabay.getTotal() === totalHits || pixabay.getTotal() > totalHits) {
+          observer.unobserve(lastItem);
+          Notiflix.Notify.info('We are sorry, but you have reached the end of search results');
+        }
+      } catch (error) {
+        Notiflix.Notify.warning('Щось пішло не так');
+        console.log(error);
+      } finally { refs.backdrop.classList.add('is-hidden'); }
     }
-    )
-}
+  })
+};
 
 const observer = new IntersectionObserver(onLoadMoreImages, options);
 
 async function onFormSubmit(event) {
-    event.preventDefault();
-    pageReset();
-    const {value} = event.currentTarget.elements.searchQuery
-    pixabay.setQuery(value);
-    const {hits, totalHits} = await pixabay.fetchImages();
-    console.log(totalHits);
-    const markup = onSearchRender(hits);
-    refs.gallery.insertAdjacentHTML('beforeend', markup);
-    lightbox.refresh();
-      const lastItem = document.querySelector('.gallery .link:last-child');
-          observer.observe(lastItem);
-}
+  event.preventDefault();
+  pageReset();
+  const { value } = event.currentTarget.elements.searchQuery;
+  pixabay.setQuery(value);
+    
+  if (pixabay.getQuery() === '') {
+    Notiflix.Notify.info('Буляска уведіть запит');
+    return;
+  }
+  
+  try {
+    refs.backdrop.classList.remove('is-hidden');
+    const { hits, totalHits } = await pixabay.fetchImages();
+      
+    if (totalHits === 0) {
+      Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+      return;
+    };
 
-function pageReset () {
-    refs.gallery.innerHTML = '';
-    pixabay.resetPage();
-    }
+    pixabay.setTotal(hits.length);
+     Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+    if (pixabay.getTotal() < 20) {
+      observer.unobserve(lastItem);
+      Notiflix.Notify.info('We are sorry, but you have reached the end of search results');
+    };
+      
+    const markup = onSearchRender(hits);
+    refs.backdrop.classList.add('is-hidden');
+    refs.gallery.insertAdjacentHTML('beforeend', markup);
+    lightbox.refresh(); 
+      const lastItem = document.querySelector('.gallery .link:last-child');
+      observer.observe(lastItem);
+      
+  } catch (error) {
+    Notiflix.Notify.warning('Щось пішло не так');
+    console.log(error);
+  } finally {
+    refs.backdrop.classList.add('is-hidden');
+  }
+};     
+
+function pageReset() {
+  refs.btnToBottom.style.display = "none";
+  refs.gallery.innerHTML = '';
+  pixabay.resetPage();
+  pixabay.resetTotal();
+};
