@@ -79,9 +79,9 @@ const observer = new IntersectionObserver(onLoadMoreImages, options);
 
 async function onFormSubmit(event) {
   event.preventDefault();
-  pageReset();
+  
   const { value } = event.currentTarget.elements.searchQuery;
-  pixabay.setQuery(value);
+  pixabay.setQuery(value.toLowerCase().trim());
     
   if (pixabay.getQuery() === '') {
     Notiflix.Notify.info('Буляска уведіть запит');
@@ -96,26 +96,26 @@ async function onFormSubmit(event) {
       Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
       return;
     };
-
+ pageReset();
     pixabay.setTotal(hits.length);
      Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
-    if (pixabay.getTotal() < 20) {
-      observer.unobserve(lastItem);
-      Notiflix.Notify.info('We are sorry, but you have reached the end of search results');
-    };
-      
+    
+   
     const markup = onSearchRender(hits);
     refs.backdrop.classList.add('is-hidden');
     refs.gallery.insertAdjacentHTML('beforeend', markup);
     lightbox.refresh(); 
       const lastItem = document.querySelector('.gallery .link:last-child');
       observer.observe(lastItem);
-      
+      if (pixabay.getTotal() < 20) {
+      observer.unobserve(lastItem);
+      Notiflix.Notify.info('We are sorry, but you have reached the end of search results');
+    };
   } catch (error) {
     Notiflix.Notify.warning('Щось пішло не так');
     console.log(error);
   } finally {
-    refs.backdrop.classList.add('is-hidden');
+       refs.backdrop.classList.add('is-hidden');
   }
 };     
 
